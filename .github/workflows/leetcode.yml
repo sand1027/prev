@@ -25,6 +25,6 @@ jobs:
         env:
           LEETCODE_SESSION: ${{ secrets.LEETCODE_SESSION }}
           LEETCODE_CSRF: ${{ secrets.LEETCODE_CSRF }}
-          GH_TOKEN_1: ${{ secrets.ACTIVITY_TOKEN_1 }}
+          GH_TOKEN_1: ${{ secrets.GH_TOKEN_1 }}
           GITHUB_REPO: prev
         run: python leetcode_daily.py
