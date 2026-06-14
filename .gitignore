@@ -1,1 +1,6 @@
 toke.txt
+LeetCode/
+venv/
+__pycache__/
+*.pyc
+build_cpp_bank.py
