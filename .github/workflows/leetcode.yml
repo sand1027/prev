@@ -1,0 +1,30 @@
+name: LeetCode Daily Solver
+
+on:
+  schedule:
+    - cron: "30 9 * * *"   # every day at 9:30 AM UTC (30 min after daily activity)
+  workflow_dispatch:         # manual trigger from GitHub UI
+
+jobs:
+  solve:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Solve 2 LeetCode problems and commit
+        env:
+          LEETCODE_SESSION: ${{ secrets.LEETCODE_SESSION }}
+          LEETCODE_CSRF: ${{ secrets.LEETCODE_CSRF }}
+          GITHUB_TOKEN_1: ${{ secrets.ACTIVITY_TOKEN_1 }}
+          GITHUB_REPO: prev
+        run: python leetcode_daily.py
