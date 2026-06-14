@@ -21,6 +21,16 @@ jobs:
       - name: Install dependencies
         run: pip install requests
 
+      - name: Debug secrets
+        env:
+          LEETCODE_SESSION: ${{ secrets.LEETCODE_SESSION }}
+          LEETCODE_CSRF: ${{ secrets.LEETCODE_CSRF }}
+          GH_TOKEN_1: ${{ secrets.GH_TOKEN_1 }}
+        run: |
+          echo "LEETCODE_SESSION set: ${{ secrets.LEETCODE_SESSION != '' }}"
+          echo "LEETCODE_CSRF set: ${{ secrets.LEETCODE_CSRF != '' }}"
+          echo "GH_TOKEN_1 set: ${{ secrets.GH_TOKEN_1 != '' }}"
+
       - name: Solve 2 LeetCode problems and commit
         env:
           LEETCODE_SESSION: ${{ secrets.LEETCODE_SESSION }}
