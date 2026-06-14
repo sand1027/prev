@@ -448,12 +448,12 @@ def solve_and_commit(lc_cookie, csrf, gh_token, gh_owner, gh_repo, num_problems=
 def main():
     lc_cookie = os.environ.get("LEETCODE_SESSION")
     csrf      = os.environ.get("LEETCODE_CSRF")
-    gh_token  = os.environ.get("GITHUB_TOKEN_1")
+    gh_token  = os.environ.get("GH_TOKEN_1")
     gh_repo   = os.environ.get("GITHUB_REPO", "prev")
 
     if not all([lc_cookie, csrf, gh_token]):
         raise SystemExit(
-            "❌ Missing env vars. Need: LEETCODE_SESSION, LEETCODE_CSRF, GITHUB_TOKEN_1"
+            "❌ Missing env vars. Need: LEETCODE_SESSION, LEETCODE_CSRF, GH_TOKEN_1"
         )
 
     user = get_authenticated_user(gh_token)
