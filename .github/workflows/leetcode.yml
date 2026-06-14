@@ -2,8 +2,14 @@ name: LeetCode Daily Solver
 
 on:
   schedule:
-    - cron: "30 9 * * *"   # every day at 9:30 AM UTC (30 min after daily activity)
-  workflow_dispatch:         # manual trigger from GitHub UI
+    - cron: "30 9 * * *"
+  workflow_dispatch:
+
+env:
+  LEETCODE_SESSION: ${{ secrets.LEETCODE_SESSION }}
+  LEETCODE_CSRF: ${{ secrets.LEETCODE_CSRF }}
+  GH_TOKEN_1: ${{ secrets.GH_TOKEN_1 }}
+  GITHUB_REPO: prev
 
 jobs:
   solve:
@@ -21,20 +27,12 @@ jobs:
       - name: Install dependencies
         run: pip install requests
 
-      - name: Debug secrets
-        env:
-          LEETCODE_SESSION: ${{ secrets.LEETCODE_SESSION }}
-          LEETCODE_CSRF: ${{ secrets.LEETCODE_CSRF }}
-          GH_TOKEN_1: ${{ secrets.GH_TOKEN_1 }}
+      - name: Check secrets are set
         run: |
-          echo "LEETCODE_SESSION set: ${{ secrets.LEETCODE_SESSION != '' }}"
-          echo "LEETCODE_CSRF set: ${{ secrets.LEETCODE_CSRF != '' }}"
-          echo "GH_TOKEN_1 set: ${{ secrets.GH_TOKEN_1 != '' }}"
+          if [ -z "$LEETCODE_SESSION" ]; then echo "❌ LEETCODE_SESSION is empty"; exit 1; fi
+          if [ -z "$LEETCODE_CSRF" ]; then echo "❌ LEETCODE_CSRF is empty"; exit 1; fi
+          if [ -z "$GH_TOKEN_1" ]; then echo "❌ GH_TOKEN_1 is empty"; exit 1; fi
+          echo "✅ All secrets present"
 
       - name: Solve 2 LeetCode problems and commit
-        env:
-          LEETCODE_SESSION: ${{ secrets.LEETCODE_SESSION }}
-          LEETCODE_CSRF: ${{ secrets.LEETCODE_CSRF }}
-          GH_TOKEN_1: ${{ secrets.GH_TOKEN_1 }}
-          GITHUB_REPO: prev
         run: python leetcode_daily.py
