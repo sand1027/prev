@@ -23,7 +23,26 @@ jobs:
         run: pip install requests
 
       - name: Solve 1 LeetCode problem
+        id: solve
         env:
           LEETCODE_SESSION: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfYXV0aF91c2VyX2lkIjoiMTY5MjY1OTciLCJfYXV0aF91c2VyX2JhY2tlbmQiOiJhbGxhdXRoLmFjY291bnQuYXV0aF9iYWNrZW5kcy5BdXRoZW50aWNhdGlvbkJhY2tlbmQiLCJfYXV0aF91c2VyX2hhc2giOiI5ZmIwMDRjODdkYjcxZDRjNGZjYzIyNWNlOGU2MjM4NmJhYThhY2Q2NWYxMWFmNjBiZTFlODc1YmU5MmM1ZmVkIiwic2Vzc2lvbl91dWlkIjoiOTZlYjdiM2QiLCJpZCI6MTY5MjY1OTcsImVtYWlsIjoic2FuZGVlcGdvd2RhMjcwMUBnbWFpbC5jb20iLCJ1c2VybmFtZSI6InNhbmR5XzEwMjciLCJ1c2VyX3NsdWciOiJzYW5keV8xMDI3IiwiYXZhdGFyIjoiaHR0cHM6Ly9hc3NldHMubGVldGNvZGUuY29tL3VzZXJzL2RlZmF1bHRfYXZhdGFyLmpwZyIsInJlZnJlc2hlZF9hdCI6MTc4MTQzOTIzMiwiaXAiOiIyNDA5OjQwZjI6MTRhOmI5Yjg6MjA2MTpjMjAxOjI3MjI6NmMzYyIsImlkZW50aXR5IjoiM2NkOGVmNTM4NTAxNDZlNDRiMjNmMjMyNjBiNmUyNGMiLCJkZXZpY2Vfd2l0aF9pcCI6WyJjNDRkZjdjZDQwMTJkYmFjZmU3YjRjNDU3MTI5YzUzMSIsIjI0MDk6NDBmMjoxNGE6YjliODoyMDYxOmMyMDE6MjcyMjo2YzNjIl0sIl9zZXNzaW9uX2V4cGlyeSI6MTIwOTYwMH0.NIh29232pB5jqQkceCYrGx75i0fAqRtbME0ey2ufG8c"
           LEETCODE_CSRF: "tmkp7WWjJaZBcdaVn4mmRNATZusUqarF"
-        run: python leetcode_daily.py
+        run: python leetcode_daily.py 2>&1 | tee /tmp/solve_output.txt
+
+      - name: Send Telegram — Success
+        if: success()
+        run: |
+          OUTPUT=$(cat /tmp/solve_output.txt | tail -20)
+          MSG="✅ LeetCode Solver — SUCCESS%0A$(date '+%Y-%m-%d %H:%M IST')%0A%0A${OUTPUT}"
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d text="${MSG}"
+
+      - name: Send Telegram — Failure
+        if: failure()
+        run: |
+          OUTPUT=$(cat /tmp/solve_output.txt 2>/dev/null | tail -20 || echo "No output captured")
+          MSG="❌ LeetCode Solver — FAILED%0A$(date '+%Y-%m-%d %H:%M IST')%0A%0A${OUTPUT}%0A%0A⚠️ Session cookie may have expired. Update LEETCODE_SESSION in workflow.%0ARun: https://github.com/${{ github.repository }}/actions"
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d text="${MSG}"
