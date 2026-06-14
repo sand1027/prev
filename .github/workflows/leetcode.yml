@@ -22,6 +22,23 @@ jobs:
       - name: Install dependencies
         run: pip install requests
 
+      - name: Telegram start
+        env:
+          BOT: ${{ vars.TELEGRAM_BOT_TOKEN }}
+          CHAT: ${{ vars.TELEGRAM_CHAT_ID }}
+          REPO: ${{ github.repository }}
+        run: |
+          python3 -c "
+          import os, urllib.request, urllib.parse
+          bot = os.environ['BOT'].strip()
+          chat = os.environ['CHAT'].strip()
+          repo = os.environ['REPO'].strip()
+          msg = '🚀 LeetCode Solver STARTED\nRun: https://github.com/' + repo + '/actions'
+          data = urllib.parse.urlencode({'chat_id': chat, 'text': msg}).encode()
+          urllib.request.urlopen('https://api.telegram.org/bot' + bot + '/sendMessage', data)
+          print('Start notification sent')
+          "
+
       - name: Solve 1 LeetCode problem
         id: solve
         env:
@@ -38,9 +55,12 @@ jobs:
         run: |
           python3 -c "
           import os, urllib.request, urllib.parse
-          msg = '✅ LeetCode Solver SUCCESS\nRepo: ' + os.environ['REPO'] + '\nRun: https://github.com/' + os.environ['REPO'] + '/actions'
-          data = urllib.parse.urlencode({'chat_id': os.environ['CHAT'], 'text': msg}).encode()
-          urllib.request.urlopen('https://api.telegram.org/bot' + os.environ['BOT'] + '/sendMessage', data)
+          bot = os.environ['BOT'].strip()
+          chat = os.environ['CHAT'].strip()
+          repo = os.environ['REPO'].strip()
+          msg = '✅ LeetCode Solver SUCCESS\nRepo: ' + repo + '\nRun: https://github.com/' + repo + '/actions'
+          data = urllib.parse.urlencode({'chat_id': chat, 'text': msg}).encode()
+          urllib.request.urlopen('https://api.telegram.org/bot' + bot + '/sendMessage', data)
           print('Telegram sent')
           "
 
@@ -53,8 +73,11 @@ jobs:
         run: |
           python3 -c "
           import os, urllib.request, urllib.parse
-          msg = '❌ LeetCode Solver FAILED\nSession cookie may have expired!\nUpdate LEETCODE_SESSION in workflow file.\nRun: https://github.com/' + os.environ['REPO'] + '/actions'
-          data = urllib.parse.urlencode({'chat_id': os.environ['CHAT'], 'text': msg}).encode()
-          urllib.request.urlopen('https://api.telegram.org/bot' + os.environ['BOT'] + '/sendMessage', data)
+          bot = os.environ['BOT'].strip()
+          chat = os.environ['CHAT'].strip()
+          repo = os.environ['REPO'].strip()
+          msg = '❌ LeetCode Solver FAILED\nSession cookie may have expired!\nUpdate LEETCODE_SESSION in workflow file.\nRun: https://github.com/' + repo + '/actions'
+          data = urllib.parse.urlencode({'chat_id': chat, 'text': msg}).encode()
+          urllib.request.urlopen('https://api.telegram.org/bot' + bot + '/sendMessage', data)
           print('Telegram sent')
           "
