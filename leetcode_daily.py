@@ -26,12 +26,15 @@ from datetime import datetime
 from solution_bank import SOLUTION_BANK
 from blind75_bank import BLIND75_SOLUTIONS
 from sql_bank import SQL_SOLUTIONS
+from extended_bank import EXTENDED_BANK
+from cpp_bank import CPP_BANK
 
 # Merge all Python solutions
 ALL_PYTHON_SOLUTIONS = {**SOLUTION_BANK, **BLIND75_SOLUTIONS}
-# SQL solutions are separate (different lang + submission endpoint)
 AVAILABLE_SLUGS = list(ALL_PYTHON_SOLUTIONS.keys())
 AVAILABLE_SQL_SLUGS = list(SQL_SOLUTIONS.keys())
+# C++ bank: slug -> code (lang = "cpp")
+AVAILABLE_CPP_SLUGS = list(CPP_BANK.keys())
 
 # ─────────────────────────────────────────────
 # LEETCODE API
@@ -184,7 +187,26 @@ def get_solved_slugs(session):
             break
     return solved
 
-# ─────────────────────────────────────────────
+# Premium-only problems — 403 on submit without subscription
+PREMIUM_SLUGS = {
+    "trips-and-users",
+    "department-top-three-salaries",
+    "nth-highest-salary",
+    "reported-posts-ii",
+    "string-transforms-into-another-string",
+    "number-of-islands-ii",
+    "alien-dictionary",
+    "meeting-rooms",
+    "encode-and-decode-strings",
+    "graph-valid-tree",
+    "number-of-connected-components-in-an-undirected-graph",
+    "missing-ranges",
+    "find-the-celebrity",
+    "wiggle-sort",
+    "paint-house",
+    "paint-fence",
+    "best-time-to-buy-and-sell-stock-with-cooldown",
+}# ─────────────────────────────────────────────
 # WRONG SOLUTION GENERATOR
 # ─────────────────────────────────────────────
 
@@ -460,28 +482,48 @@ def main():
     solved_slugs = get_solved_slugs(session)
     print(f"  You have solved {len(solved_slugs)} problem(s) on LeetCode.")
 
-    unsolved_py  = [s for s in AVAILABLE_SLUGS if s not in solved_slugs]
-    unsolved_sql = [s for s in AVAILABLE_SQL_SLUGS if s not in solved_slugs]
-    print(f"  Python unsolved in bank: {len(unsolved_py)}")
-    print(f"  SQL unsolved in bank:    {len(unsolved_sql)}")
+    unsolved_py  = [s for s in AVAILABLE_SLUGS if s not in solved_slugs and s not in PREMIUM_SLUGS]
+    unsolved_sql = [s for s in AVAILABLE_SQL_SLUGS if s not in solved_slugs and s not in PREMIUM_SLUGS]
+    unsolved_cpp = [s for s in AVAILABLE_CPP_SLUGS if s not in solved_slugs and s not in PREMIUM_SLUGS]
+    extended_available = [(slug, lang) for (slug, lang), _ in EXTENDED_BANK.items()
+                          if slug not in solved_slugs and slug not in PREMIUM_SLUGS]
 
-    if not unsolved_py and not unsolved_sql:
+    print(f"  Python unsolved : {len(unsolved_py)}")
+    print(f"  SQL unsolved    : {len(unsolved_sql)}")
+    print(f"  C++ unsolved    : {len(unsolved_cpp)}")
+    print(f"  Extended unsolved: {len(extended_available)}")
+
+    all_available = (
+        [("cpp", s) for s in unsolved_cpp] +
+        [("python3", s) for s in unsolved_py] +
+        [("mysql", s) for s in unsolved_sql] +
+        [(lang, slug) for (slug, lang) in extended_available]
+    )
+
+    if not all_available:
         print("  ✅ All problems in the bank are already solved!")
         return
 
-    chosen = []
-    if unsolved_py:
-        chosen.append(("python3", random.choice(unsolved_py)))
-    if unsolved_sql:
-        chosen.append(("mysql", random.choice(unsolved_sql)))
-    elif len(unsolved_py) >= 2:
-        second = random.choice([s for s in unsolved_py if s != chosen[0][1]])
-        chosen.append(("python3", second))
+    # Deduplicate by slug (prefer cpp first)
+    seen_slugs = set()
+    deduped = []
+    for lang, slug in all_available:
+        if slug not in seen_slugs:
+            seen_slugs.add(slug)
+            deduped.append((lang, slug))
+
+    chosen = random.sample(deduped, min(1, len(deduped)))
 
     results = []
     for lang, slug in chosen[:2]:
         print(f"\n── Problem: {slug} ({lang}) ──")
-        solution_code = SQL_SOLUTIONS[slug][1] if lang == "mysql" else ALL_PYTHON_SOLUTIONS[slug]
+        solution_code = SQL_SOLUTIONS[slug][1] if lang == "mysql" and slug in SQL_SOLUTIONS else \
+                       CPP_BANK.get(slug) if lang == "cpp" else \
+                       EXTENDED_BANK.get((slug, lang)) or \
+                       (ALL_PYTHON_SOLUTIONS.get(slug) if lang == "python3" else None)
+        if not solution_code:
+            print(f"  ⚠️  No solution found for {slug} ({lang}), skipping")
+            continue
 
         try:
             detail = get_problem_detail(session, slug)
