@@ -448,20 +448,81 @@ def solve_and_commit(lc_cookie, csrf, gh_token, gh_owner, gh_repo, num_problems=
 def main():
     lc_cookie = os.environ.get("LEETCODE_SESSION")
     csrf      = os.environ.get("LEETCODE_CSRF")
-    gh_token  = os.environ.get("GH_TOKEN_1")
-    gh_repo   = os.environ.get("GITHUB_REPO", "prev")
 
-    if not all([lc_cookie, csrf, gh_token]):
-        raise SystemExit(
-            "❌ Missing env vars. Need: LEETCODE_SESSION, LEETCODE_CSRF, GH_TOKEN_1"
-        )
+    if not all([lc_cookie, csrf]):
+        raise SystemExit("❌ Missing env vars. Need: LEETCODE_SESSION, LEETCODE_CSRF")
 
-    user = get_authenticated_user(gh_token)
-    gh_owner = user["login"]
-    print(f"GitHub: {gh_owner}/{gh_repo}")
-    print(f"Date:   {datetime.now().strftime('%Y-%m-%d')}\n")
+    session = lc_session(lc_cookie, csrf)
+    today = datetime.now().strftime("%Y-%m-%d")
+    print(f"Date: {today}\n")
 
-    results = solve_and_commit(lc_cookie, csrf, gh_token, gh_owner, gh_repo, num_problems=2)
+    print("Fetching your solved problems from LeetCode...")
+    solved_slugs = get_solved_slugs(session)
+    print(f"  You have solved {len(solved_slugs)} problem(s) on LeetCode.")
+
+    unsolved_py  = [s for s in AVAILABLE_SLUGS if s not in solved_slugs]
+    unsolved_sql = [s for s in AVAILABLE_SQL_SLUGS if s not in solved_slugs]
+    print(f"  Python unsolved in bank: {len(unsolved_py)}")
+    print(f"  SQL unsolved in bank:    {len(unsolved_sql)}")
+
+    if not unsolved_py and not unsolved_sql:
+        print("  ✅ All problems in the bank are already solved!")
+        return
+
+    chosen = []
+    if unsolved_py:
+        chosen.append(("python3", random.choice(unsolved_py)))
+    if unsolved_sql:
+        chosen.append(("mysql", random.choice(unsolved_sql)))
+    elif len(unsolved_py) >= 2:
+        second = random.choice([s for s in unsolved_py if s != chosen[0][1]])
+        chosen.append(("python3", second))
+
+    results = []
+    for lang, slug in chosen[:2]:
+        print(f"\n── Problem: {slug} ({lang}) ──")
+        solution_code = SQL_SOLUTIONS[slug][1] if lang == "mysql" else ALL_PYTHON_SOLUTIONS[slug]
+
+        try:
+            detail = get_problem_detail(session, slug)
+            qid    = detail["questionId"]
+            title  = detail["title"]
+            difficulty = detail["difficulty"]
+            print(f"  #{qid} {title} [{difficulty}]")
+        except Exception as e:
+            print(f"  ⚠️  Could not fetch details: {e}")
+            qid, title, difficulty = "?", slug, "Easy"
+
+        # Wrong attempts first
+        num_wrong = random.randint(2, 6)
+        print(f"  Submitting {num_wrong} wrong attempt(s)...")
+        for attempt in range(num_wrong):
+            wrong_code = solution_code.replace("return ", "return None #") if lang == "mysql" else make_wrong_submission(solution_code)
+            try:
+                wrong_sub_id = submit_solution(session, slug, qid, wrong_code, lang=lang)
+                time.sleep(random.uniform(4, 8))
+                wrong_result = check_submission(session, wrong_sub_id)
+                print(f"    Attempt {attempt+1}/{num_wrong}: {wrong_result.get('status_msg','?')} (wrong — expected)")
+            except Exception as e:
+                print(f"    Attempt {attempt+1}/{num_wrong}: ⚠️  {e}")
+            time.sleep(random.uniform(5, 15))
+
+        # Correct submission
+        print(f"  Submitting correct solution...")
+        time.sleep(random.uniform(3, 8))
+        try:
+            sub_id = submit_solution(session, slug, qid, solution_code, lang=lang)
+            time.sleep(5)
+            result = check_submission(session, sub_id)
+            status  = result.get("status_msg", "Unknown")
+            runtime = result.get("status_runtime", "N/A")
+            memory  = result.get("status_memory", "N/A")
+            print(f"  ✅ {status} | Runtime: {runtime} | Memory: {memory}")
+            results.append({"title": title, "difficulty": difficulty, "status": status})
+        except Exception as e:
+            print(f"  ⚠️  Submission failed: {e}")
+
+        time.sleep(3)
 
     print(f"\n🎉 Done! Solved {len(results)} problem(s) today.")
     for r in results:
