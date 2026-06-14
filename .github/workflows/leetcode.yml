@@ -29,21 +29,32 @@ jobs:
           LEETCODE_CSRF: "tmkp7WWjJaZBcdaVn4mmRNATZusUqarF"
         run: python leetcode_daily.py
 
-      - name: Send Telegram — Success
+      - name: Telegram success
         if: success()
+        env:
+          BOT: ${{ vars.TELEGRAM_BOT_TOKEN }}
+          CHAT: ${{ vars.TELEGRAM_CHAT_ID }}
+          REPO: ${{ github.repository }}
         run: |
-          curl -s -X POST "https://api.telegram.org/bot${{ vars.TELEGRAM_BOT_TOKEN }}/sendMessage" \
-            --data-urlencode "chat_id=${{ vars.TELEGRAM_CHAT_ID }}" \
-            --data-urlencode "text=✅ LeetCode Solver — SUCCESS
-$(date '+%Y-%m-%d %H:%M') IST
-Run: https://github.com/${{ github.repository }}/actions"
+          python3 -c "
+          import os, urllib.request, urllib.parse
+          msg = '✅ LeetCode Solver SUCCESS\nRepo: ' + os.environ['REPO'] + '\nRun: https://github.com/' + os.environ['REPO'] + '/actions'
+          data = urllib.parse.urlencode({'chat_id': os.environ['CHAT'], 'text': msg}).encode()
+          urllib.request.urlopen('https://api.telegram.org/bot' + os.environ['BOT'] + '/sendMessage', data)
+          print('Telegram sent')
+          "
 
-      - name: Send Telegram — Failure
+      - name: Telegram failure
         if: failure()
+        env:
+          BOT: ${{ vars.TELEGRAM_BOT_TOKEN }}
+          CHAT: ${{ vars.TELEGRAM_CHAT_ID }}
+          REPO: ${{ github.repository }}
         run: |
-          curl -s -X POST "https://api.telegram.org/bot${{ vars.TELEGRAM_BOT_TOKEN }}/sendMessage" \
-            --data-urlencode "chat_id=${{ vars.TELEGRAM_CHAT_ID }}" \
-            --data-urlencode "text=❌ LeetCode Solver — FAILED
-$(date '+%Y-%m-%d %H:%M') IST
-Session cookie may have expired. Update LEETCODE_SESSION in workflow.
-Run: https://github.com/${{ github.repository }}/actions"
+          python3 -c "
+          import os, urllib.request, urllib.parse
+          msg = '❌ LeetCode Solver FAILED\nSession cookie may have expired!\nUpdate LEETCODE_SESSION in workflow file.\nRun: https://github.com/' + os.environ['REPO'] + '/actions'
+          data = urllib.parse.urlencode({'chat_id': os.environ['CHAT'], 'text': msg}).encode()
+          urllib.request.urlopen('https://api.telegram.org/bot' + os.environ['BOT'] + '/sendMessage', data)
+          print('Telegram sent')
+          "
