@@ -187,7 +187,7 @@ def get_solved_slugs(session):
             break
     return solved
 
-# Premium-only problems — 403 on submit without subscription
+# Premium-only problems + problems with known submission issues
 PREMIUM_SLUGS = {
     "trips-and-users",
     "department-top-three-salaries",
@@ -206,6 +206,58 @@ PREMIUM_SLUGS = {
     "paint-house",
     "paint-fence",
     "best-time-to-buy-and-sell-stock-with-cooldown",
+    # Slugs with special characters that cause 500 errors
+    "pascal-s-triangle",
+    "pascal-s-triangle-ii",
+    "read-n-characters-given-read4",
+    "read-n-characters-given-read4-ii-call-multiple-times",
+    "one-edit-distance",
+    "find-the-celebrity",
+    "shortest-word-distance-ii",
+    "strobogrammatic-number",
+    "strobogrammatic-number-ii",
+    "group-shifted-strings",
+    "flatten-2d-vector",
+    "meeting-rooms-ii",
+    "count-univalue-subtrees",
+    "binary-tree-longest-consecutive-sequence",
+    "zigzag-iterator",
+    "design-hit-counter",
+    "nested-list-weight-sum",
+    "nested-list-weight-sum-ii",
+    "flip-game",
+    "flip-game-ii",
+    "palindrome-permutation",
+    "palindrome-permutation-ii",
+    "closest-binary-search-tree-value",
+    "closest-binary-search-tree-value-ii",
+    "encode-and-decode-strings",
+    "android-unlock-patterns",
+    "design-log-storage-system",
+    "design-search-autocomplete-system",
+    "robot-room-cleaner",
+    "sentence-screen-fitting",
+    "bomb-enemy",
+    "design-tic-tac-toe",
+    "sparse-matrix-multiplication",
+    "maximum-size-subarray-sum-equals-k",
+    "binary-tree-vertical-order-traversal",
+    "shortest-distance-from-all-buildings",
+    "wiggle-sort-ii",
+    "largest-bst-subtree",
+    "sequence-reconstruction",
+    "inorder-successor-in-bst",
+    "walls-and-gates",
+    "unique-word-abbreviation",
+    "valid-word-abbreviation",
+    "minimum-unique-word-abbreviation",
+    "find-permutation",
+    "next-closest-time",
+    "k-empty-slots",
+    "candy-crush",
+    "sentence-similarity",
+    "sentence-similarity-ii",
+    "friend-circles",  # renamed to number-of-provinces
 }# ─────────────────────────────────────────────
 # WRONG SOLUTION GENERATOR
 # ─────────────────────────────────────────────
@@ -515,7 +567,17 @@ def main():
     chosen = random.sample(deduped, min(1, len(deduped)))
 
     results = []
-    for lang, slug in chosen[:2]:
+    attempted_slugs = set()
+
+    # Try up to 5 candidates in case some fail with 500
+    candidates = random.sample(deduped, min(5, len(deduped)))
+
+    for lang, slug in candidates:
+        if len(results) >= 1:
+            break  # got our 1 problem
+        if slug in attempted_slugs:
+            continue
+        attempted_slugs.add(slug)
         print(f"\n── Problem: {slug} ({lang}) ──")
         solution_code = SQL_SOLUTIONS[slug][1] if lang == "mysql" and slug in SQL_SOLUTIONS else \
                        CPP_BANK.get(slug) if lang == "cpp" else \
@@ -569,6 +631,9 @@ def main():
     print(f"\n🎉 Done! Solved {len(results)} problem(s) today.")
     for r in results:
         print(f"  - {r['title']} [{r['difficulty']}] → {r['status']}")
+
+    if len(results) == 0:
+        raise SystemExit("❌ No problems solved — check logs above.")
 
 
 if __name__ == "__main__":
