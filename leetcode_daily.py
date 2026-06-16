@@ -570,7 +570,7 @@ def main():
     attempted_slugs = set()
 
     # Try up to 5 candidates in case some fail with 500
-    candidates = random.sample(deduped, min(5, len(deduped)))
+    candidates = random.sample(deduped, min(10, len(deduped)))
 
     for lang, slug in candidates:
         if len(results) >= 1:
@@ -621,8 +621,16 @@ def main():
             status  = result.get("status_msg", "Unknown")
             runtime = result.get("status_runtime", "N/A")
             memory  = result.get("status_memory", "N/A")
-            print(f"  ✅ {status} | Runtime: {runtime} | Memory: {memory}")
-            results.append({"title": title, "difficulty": difficulty, "status": status})
+            print(f"  Result: {status} | Runtime: {runtime} | Memory: {memory}")
+
+            if status == "Accepted":
+                print(f"  ✅ Accepted!")
+                results.append({"title": title, "difficulty": difficulty, "status": status})
+            else:
+                print(f"  ⚠️  Not accepted ({status}) — will try next candidate")
+                # Add to skip list for this run so we don't retry same slug
+                attempted_slugs.add(slug)
+
         except Exception as e:
             print(f"  ⚠️  Submission failed: {e}")
 
