@@ -421,32 +421,32 @@ def solve_and_commit(lc_cookie, csrf, gh_token, gh_owner, gh_repo, num_problems=
             print(f"  ⚠️  Could not fetch problem details: {e}")
             qid, title, difficulty = "?", slug, "Easy"
 
-        # Submit wrong solutions first (2-6 random attempts) to look human
-        num_wrong = random.randint(2, 6)
-        print(f"  Submitting {num_wrong} wrong attempt(s) first (human simulation)...")
-        for attempt in range(num_wrong):
-            if lang == "mysql":
-                # For SQL: submit slightly broken SQL
-                wrong_code = solution_code.replace("COUNT(*)", "COUNT(1)+999") \
-                                          .replace("SUM(", "AVG(") \
-                                          .replace("MAX(", "MIN(")
-                if wrong_code == solution_code:
-                    wrong_code = solution_code + "\nLIMIT 0"
-            else:
-                wrong_code = make_wrong_submission(solution_code)
-            try:
-                wrong_sub_id = submit_solution(session, slug, qid, wrong_code, lang=lang)
-                time.sleep(random.uniform(4, 8))  # random thinking delay
-                wrong_result = check_submission(session, wrong_sub_id)
-                wrong_status = wrong_result.get("status_msg", "Unknown")
-                print(f"    Attempt {attempt+1}/{num_wrong}: {wrong_status} (wrong — expected)")
-            except Exception as e:
-                print(f"    Attempt {attempt+1}/{num_wrong}: ⚠️  {e}")
-            # Random pause between attempts like a human re-reading the problem
-            time.sleep(random.uniform(5, 15))
+        # # Submit wrong solutions first (2-6 random attempts) to look human
+        # num_wrong = random.randint(2, 6)
+        # print(f"  Submitting {num_wrong} wrong attempt(s) first (human simulation)...")
+        # for attempt in range(num_wrong):
+        #     if lang == "mysql":
+        #         # For SQL: submit slightly broken SQL
+        #         wrong_code = solution_code.replace("COUNT(*)", "COUNT(1)+999") \
+        #                                   .replace("SUM(", "AVG(") \
+        #                                   .replace("MAX(", "MIN(")
+        #         if wrong_code == solution_code:
+        #             wrong_code = solution_code + "\nLIMIT 0"
+        #     else:
+        #         wrong_code = make_wrong_submission(solution_code)
+        #     try:
+        #         wrong_sub_id = submit_solution(session, slug, qid, wrong_code, lang=lang)
+        #         time.sleep(random.uniform(4, 8))  # random thinking delay
+        #         wrong_result = check_submission(session, wrong_sub_id)
+        #         wrong_status = wrong_result.get("status_msg", "Unknown")
+        #         print(f"    Attempt {attempt+1}/{num_wrong}: {wrong_status} (wrong — expected)")
+        #     except Exception as e:
+        #         print(f"    Attempt {attempt+1}/{num_wrong}: ⚠️  {e}")
+        #     # Random pause between attempts like a human re-reading the problem
+        #     time.sleep(random.uniform(5, 15))
 
         print(f"  Now submitting correct solution...")
-        time.sleep(random.uniform(3, 8))  # pause before correct attempt
+        # time.sleep(random.uniform(3, 8))  # pause before correct attempt
 
         # Submit to LeetCode
         submitted = False
@@ -597,23 +597,22 @@ def main():
             print(f"  ⚠️  Could not fetch details: {e}")
             qid, title, difficulty = "?", slug, "Easy"
 
-        # Wrong attempts first
-        num_wrong = random.randint(2, 6)
-        print(f"  Submitting {num_wrong} wrong attempt(s)...")
-        for attempt in range(num_wrong):
-            wrong_code = solution_code.replace("return ", "return None #") if lang == "mysql" else make_wrong_submission(solution_code)
-            try:
-                wrong_sub_id = submit_solution(session, slug, qid, wrong_code, lang=lang)
-                time.sleep(random.uniform(4, 8))
-                wrong_result = check_submission(session, wrong_sub_id)
-                print(f"    Attempt {attempt+1}/{num_wrong}: {wrong_result.get('status_msg','?')} (wrong — expected)")
-            except Exception as e:
-                print(f"    Attempt {attempt+1}/{num_wrong}: ⚠️  {e}")
-            time.sleep(random.uniform(5, 15))
+        # # Wrong attempts first
+        # num_wrong = random.randint(2, 6)
+        # print(f"  Submitting {num_wrong} wrong attempt(s)...")
+        # for attempt in range(num_wrong):
+        #     wrong_code = solution_code.replace("return ", "return None #") if lang == "mysql" else make_wrong_submission(solution_code)
+        #     try:
+        #         wrong_sub_id = submit_solution(session, slug, qid, wrong_code, lang=lang)
+        #         time.sleep(random.uniform(4, 8))
+        #         wrong_result = check_submission(session, wrong_sub_id)
+        #         print(f"    Attempt {attempt+1}/{num_wrong}: {wrong_result.get('status_msg','?')} (wrong — expected)")
+        #     except Exception as e:
+        #         print(f"    Attempt {attempt+1}/{num_wrong}: ⚠️  {e}")
+        #     time.sleep(random.uniform(5, 15))
 
         # Correct submission
         print(f"  Submitting correct solution...")
-        time.sleep(random.uniform(3, 8))
         try:
             sub_id = submit_solution(session, slug, qid, solution_code, lang=lang)
             time.sleep(5)
