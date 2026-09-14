@@ -1,0 +1,24 @@
+{
+  "name": "leetcode-daily-bot",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Daily LeetCode via Playwright login + OpenRouter/NVIDIA LLM API",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "daily": "node src/index.js",
+    "login-only": "node src/index.js --login-only",
+    "export-session": "node src/export-session.js",
+    "chatgpt-login": "node src/index.js --chatgpt-login",
+    "open-chrome": "node src/open-chrome.js",
+    "open-chrome:chatgpt": "node src/open-chrome.js chatgpt",
+    "open-chrome:leetcode": "node src/open-chrome.js leetcode",
+    "browsers": "npx playwright install chromium"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "playwright": "^1.50.1"
+  }
+}

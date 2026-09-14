@@ -1,0 +1,11 @@
+node_modules/
+.env
+.cookies.json
+.chatgpt-state.json
+.chrome-profile/
+.chrome-profile-leetcode/
+.chrome-profile-chatgpt/
+screenshots/
+src/config.js
+*.log
+.DS_Store

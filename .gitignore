@@ -1,0 +1,15 @@
+toke.txt
+LeetCode/
+venv/
+__pycache__/
+*.pyc
+build_cpp_bank.py
+leetcode-bot/node_modules/
+leetcode-bot/.env
+leetcode-bot/.cookies.json
+leetcode-bot/.chatgpt-state.json
+leetcode-bot/.chrome-profile/
+leetcode-bot/.chrome-profile-leetcode/
+leetcode-bot/.chrome-profile-chatgpt/
+leetcode-bot/src/config.js
+leetcode-bot/screenshots/

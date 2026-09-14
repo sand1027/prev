@@ -1,0 +1,27 @@
+# Host on an always-on Mac / Linux laptop (NOT GitHub Actions).
+# Playwright re-logins when LeetCode cookies expire — no manual SESSION/CSRF every 15 days.
+#
+# Setup:
+#   1. Copy config.example.js → src/config.js (username/password + NVIDIA + Telegram)
+#   2. First run on the host (headed): npm run login-only   # click CAPTCHA once if shown
+#   3. Cron daily, e.g. 9:00 AM IST:
+#        30 3 * * *  cd /path/to/leetcode-bot && /usr/bin/npm run daily >> /tmp/lc-bot.log 2>&1
+#
+# Docker (Linux host with display / X11 — optional):
+#   docker compose up --build
+#
+services:
+  leetcode-bot:
+    build: .
+    environment:
+      - HEADLESS=false
+    volumes:
+      - ./src/config.js:/app/src/config.js:ro
+      - lc-cookies:/app/.cookies.json-dir
+      - lc-chrome:/app/.chrome-profile-leetcode
+    # Prefer host network Chrome on Mac — use cron on the Mac instead of Docker.
+    profiles: ["linux"]
+
+volumes:
+  lc-cookies:
+  lc-chrome:

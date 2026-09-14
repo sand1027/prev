@@ -1,0 +1,75 @@
+name: LeetCode Bot (optional cookie CI)
+
+# Prefer hosting on an always-on Mac/laptop with Playwright re-login
+# (cookies expire ~2 weeks; Playwright + password fixes that).
+# This workflow is cookie-only and WILL break when the session expires
+# unless you refresh LEETCODE_SESSION / LEETCODE_CSRF secrets.
+#
+# Default: manual only. Uncomment schedule if you accept cookie refresh.
+
+on:
+  workflow_dispatch:
+  # schedule:
+  #   - cron: "30 3 * * *" # 9:00 AM IST
+
+jobs:
+  daily:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: leetcode-bot/package.json
+
+      - name: Install deps
+        working-directory: leetcode-bot
+        run: npm ci
+
+      - name: Write config from secrets
+        working-directory: leetcode-bot
+        env:
+          LEETCODE_SESSION: ${{ secrets.LEETCODE_SESSION }}
+          LEETCODE_CSRF: ${{ secrets.LEETCODE_CSRF }}
+          LLM_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+          LLM_MODEL: ${{ vars.LLM_MODEL }}
+          TELEGRAM_BOT_TOKEN: ${{ vars.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ vars.TELEGRAM_CHAT_ID }}
+        run: |
+          python3 <<'PY'
+          import json, os, sys
+          need = ["LEETCODE_SESSION", "LEETCODE_CSRF", "LLM_API_KEY"]
+          for k in need:
+              if not os.environ.get(k):
+                  print("Missing secret/env:", k, file=sys.stderr)
+                  sys.exit(1)
+          c = {
+              "LEETCODE_SESSION": os.environ["LEETCODE_SESSION"],
+              "LEETCODE_CSRF": os.environ["LEETCODE_CSRF"],
+              "LLM_PROVIDER": "nvidia",
+              "LLM_API_KEY": os.environ["LLM_API_KEY"],
+              "LLM_BASE_URL": "https://integrate.api.nvidia.com/v1",
+              "LLM_MODEL": os.environ.get("LLM_MODEL") or "meta/llama-3.1-70b-instruct",
+              "TELEGRAM_BOT_TOKEN": os.environ.get("TELEGRAM_BOT_TOKEN") or "",
+              "TELEGRAM_CHAT_ID": os.environ.get("TELEGRAM_CHAT_ID") or "",
+              "LANG": "cpp",
+              "MAX_FIX_ROUNDS": 5,
+              "HEADLESS": True,
+              "KEEP_OPEN_ON_FAIL": False,
+              "ALLOW_BROWSER_LOGIN": False,
+              "SOLVE_DAILY": True,
+              "PROBLEMS_PER_DAY": 3,
+              "PROBLEM_POOL": ["EASY", "MEDIUM", "HARD", "SQL"],
+          }
+          with open("src/config.js", "w") as f:
+              f.write("export const CONFIG = " + json.dumps(c, indent=2) + ";\n")
+          print("config.js written for cookie-only CI")
+          PY
+
+      - name: Run daily bot
+        working-directory: leetcode-bot
+        run: npm run daily
